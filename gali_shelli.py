@@ -1,3 +1,6 @@
+import itertools
+
+
 class GaliShelli:
     def __init__(self):
         pass
@@ -27,11 +30,15 @@ class GaliShelli:
         proposals_pairs_was = proposals_pairs.copy()
         acceptors_pairs = [-1] * acceptors_count
         max_priorities_count = max([len(x) for x in proposals_priorities])
+        proposals_local_priority_nums = [0] * proposals_count
         proposals_loop_elements = list(range(proposals_count))  # for optimization loop
-        for priority_num in range(max_priorities_count):
-            day = priority_num + 1
+        for global_priority_count in itertools.count():
+            day = global_priority_count + 1
             if len([x for x in proposals_pairs if x == -1]) < 1:
                 print("Все предложения приняты. Распределение завершено")
+                break
+            if len([x for x in proposals_loop_elements if proposals_pairs[x] == -1]) < 1:
+                print("Остались стабильные пары с дырками. Распределение завершено")
                 break
             print(f"День {day}")
 
@@ -39,11 +46,13 @@ class GaliShelli:
                 if proposals_pairs[selected_proposal] >= 0:
                     continue
                 selected_proposal_priorities = proposals_priorities[selected_proposal]
-                if priority_num >= len(selected_proposal_priorities):
+                local_priority_num = proposals_local_priority_nums[selected_proposal]
+                if local_priority_num >= len(selected_proposal_priorities):
                     proposals_loop_elements.remove(selected_proposal)
                     continue
+                proposals_local_priority_nums[selected_proposal] += 1
 
-                selected_acceptor = selected_proposal_priorities[priority_num]
+                selected_acceptor = selected_proposal_priorities[local_priority_num]
                 selected_acceptor_priorities = acceptors_priorities[selected_acceptor]
 
                 # Если принимающий не имеет интереса к подающему
@@ -58,6 +67,9 @@ class GaliShelli:
                         proposals_pairs[paired_proposal] = -1
                         proposals_pairs[selected_proposal] = selected_acceptor
                         acceptors_pairs[selected_acceptor] = selected_proposal
+                    else:
+                        pass
+                    pass
                 else:
                     proposals_pairs[selected_proposal] = selected_acceptor
                     acceptors_pairs[selected_acceptor] = selected_proposal
