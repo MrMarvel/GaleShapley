@@ -10,6 +10,28 @@ import shelli_formatter
 lists_folder = 'lists'
 
 
+class TimacadSource:
+    def __init__(self, file):
+        pass
+
+    @staticmethod
+    def get_canon(file) -> pd.DataFrame:
+        cols = ['СНИЛС', 'Сумма баллов', 'Дополнительные баллы', 'Приоритет', 'Вид документов']
+        data = pd.read_csv(file, usecols=cols, delimiter=';')
+        data = data.rename(columns={'Сумма баллов': 'Итоговый балл', 'Дополнительные баллы': 'Дополнительный балл'})
+        data['Средняя оценка'] = '0'
+        return data
+
+    @staticmethod
+    def get_direction_max_accepts(absolute_pos) -> int:
+        cool_list = ['10', '15', '15', '15', '30', '21', '20', '20', '21', '12', '12', '12', '13', '15', '15', '15',
+                     '13', '13', '14', '13', '13', '18', '12', '13', '13', '18', '16', '16', '15', '19', '18', '19',
+                     '19', '20', '20', '15', '15', '15', '13', '15', '15', '15', '5', '5', '31']
+        if absolute_pos < len(cool_list):
+            return int(cool_list[absolute_pos])
+        return 1
+
+
 def main():
     files = []
     # .csv files in lists folder
@@ -29,7 +51,7 @@ def main():
              'Средняя оценка': np.float32, 'Дополнительный балл': np.uint16}
     defaults = {'Дополнительный балл': 0, 'Средняя оценка': 0}
     directions_names = [''] * len(files)
-    directions_max = [0] * len(files)
+    directions_max = [1] * len(files)
     df_merged = pd.DataFrame()
     for direction_num in range(directions_count):
         file = files[direction_num]
@@ -38,11 +60,13 @@ def main():
         prefix = filename.removesuffix(file.suffix)
         directions_names[direction_num] = prefix[:prefix.find('max')].removesuffix('-')
         info_items = prefix[filename.find('max'):].split('-')
-        free_max = 0
         if len(info_items) > 1:
             free_max = int(info_items[1])
+            directions_max[direction_num] = free_max
+        # df = pd.read_csv(file, usecols=list(types.keys()))
+        df = TimacadSource.get_canon(file)
+        free_max = TimacadSource.get_direction_max_accepts(direction_num)
         directions_max[direction_num] = free_max
-        df = pd.read_csv(file, usecols=list(types.keys()))
         # reorder
         df = df[types.keys()]
         # приведение типов
@@ -92,10 +116,10 @@ def main():
                                           ignore_index=True)
         dir_tables.append(dir_table)
     res_table = pd.concat(dir_tables, ignore_index=True)
-    print(res_table)
+
+    print(res_table.to_string())
     #
     pass
-
 
     pass
 
